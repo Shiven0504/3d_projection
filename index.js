@@ -2,8 +2,8 @@ const BACKGROUND = "#101010"
 const FOREGROUND = "#50FF50"
 
 console.log(game)
-game.width = 500
-game.height = 500
+game.width = 600
+game.height = 580
 const ctx = game.getContext("2d")
 console.log(ctx)
 
