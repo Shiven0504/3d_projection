@@ -1,57 +1,26 @@
 from ursina import *
 from ursina.prefabs.first_person_controller import FirstPersonController
-# ...existing code...
-
 app = Ursina()
 player = FirstPersonController()
 Sky()
 
 boxes = []
 for i in range(20):
-    for j in range(20):
-        box = Button(
-            color=color.white,
-            model='cube',
-            position=Vec3(j, 0, i),
-            texture='grass.png',
-            parent=scene,
-            origin_y=0.5,
-            collider='box'
-        )
-        boxes.append(box)
-
-def update():
-    # simple hover highlight
-    for b in boxes:
-        b.color = color.azure if b.hovered else color.white
+  for j in range(20):
+    box = Button(color=color.white, model='cube', position=(j,0,i),
+          texture='grass.png', parent=scene, origin_y=0.5)
+    boxes.append(box)
 
 def input(key):
-    # iterate over a shallow copy to avoid modifying the list while iterating
-    for box in boxes[:]:
-        if not box.hovered:
-            continue
-
-        if key == 'left mouse down':
-            # snap to integer grid and avoid duplicates
-            new_pos = box.position + mouse.normal
-            new_pos = Vec3(round(new_pos.x), round(new_pos.y), round(new_pos.z))
-            if not any(b.position == new_pos for b in boxes):
-                new = Button(
-                    color=color.white,
-                    model='cube',
-                    position=new_pos,
-                    texture='grass.png',
-                    parent=scene,
-                    origin_y=0.5,
-                    collider='box'
-                )
-                boxes.append(new)
-            break
-
-        if key == 'right mouse down':
-            boxes.remove(box)
-            destroy(box)
-            break
+  for box in boxes:
+    if box.hovered:
+      if key == 'left mouse down':
+        new = Button(color=color.white, model='cube', position=box.position + mouse.normal,
+                    texture='grass.png', parent=scene, origin_y=0.5)
+        boxes.append(new)
+      if key == 'right mouse down':
+        boxes.remove(box)
+        destroy(box)
 
 app.run()
-# ...existing code...
+
