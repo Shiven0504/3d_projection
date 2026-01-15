@@ -1,15 +1,25 @@
+// ...existing code...
 const BACKGROUND = "#101010"
 const FOREGROUND = "#50FF50"
 
-console.log(game)
-game.width = 600
-game.height = 580
-const ctx = game.getContext("2d")
-console.log(ctx)
+const canvas = document.getElementById('game') || document.querySelector('canvas')
+if (!canvas) throw new Error('Canvas element with id "game" not found')
+
+const W = 600
+const H = 580
+
+const dpr = window.devicePixelRatio || 1
+canvas.width = W * dpr
+canvas.height = H * dpr
+canvas.style.width = W + 'px'
+canvas.style.height = H + 'px'
+
+const ctx = canvas.getContext("2d")
+ctx.scale(dpr, dpr)
 
 function clear() {
     ctx.fillStyle = BACKGROUND
-    ctx.fillRect(0, 0, game.width, game.height)
+    ctx.fillRect(0, 0, W, H)
 }
 
 function point({x, y}) {
@@ -19,6 +29,7 @@ function point({x, y}) {
 }
 
 function line(p1, p2) {
+    if (!p1 || !p2) return
     ctx.lineWidth = 3;
     ctx.strokeStyle = FOREGROUND
     ctx.beginPath();
@@ -28,22 +39,20 @@ function line(p1, p2) {
 }
 
 function screen(p) {
-    // -1..1 => 0..2 => 0..1 => 0..w
+    // -1..1 => 0..W / H
     return {
-        x: (p.x + 1)/2*game.width,
-        y: (1 - (p.y + 1)/2)*game.height,
+        x: (p.x + 1) / 2 * W,
+        y: (1 - (p.y + 1) / 2) * H,
     }
 }
 
-function project({x, y, z}) {
-    return {
-        x: x/z,
-        y: y/z,
-    }
+// perspective projection: returns normalized coords (-inf..inf) or null if behind camera
+function project({x, y, z}, camZ, focal = 1.2) {
+    const zCam = z + camZ
+    if (zCam <= 0.001) return null
+    const s = focal / zCam
+    return { x: x * s, y: y * s }
 }
-
-const FPS = 60;
-
 
 function translate_z({x, y, z}, dz) {
     return {x, y, z: z + dz};
@@ -53,15 +62,26 @@ function rotate_xz({x, y, z}, angle) {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
     return {
-        x: x*c-z*s,
+        x: x * c - z * s,
         y,
-        z: x*s+z*c,
+        z: x * s + z * c,
     };
 }
 
-let dz = 1;
-let angle = 0;
+let camZ = 3.0
+let angle = 0
 
+// mouse wheel / touchpad to zoom camera
+window.addEventListener('wheel', (e) => {
+    camZ += e.deltaY * 0.01
+    camZ = Math.max(0.5, camZ)
+})
+
+// simple keyboard controls: arrow up/down to move camera
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp') camZ = Math.max(0.5, camZ - 0.2)
+    if (e.key === 'ArrowDown') camZ += 0.2
+})
 
 const vs = [
     {x:  0.25, y:  0.25, z:  0.25},
@@ -84,22 +104,35 @@ const fs = [
     [3, 7],
 ]
 
-function frame() {
-    const dt = 1/FPS;
-    // dz += 1*dt;
-    angle += Math.PI*dt;
+// helper: world vertex -> screen point (or null if behind camera)
+function worldToScreen(v) {
+    const r = rotate_xz(v, angle)
+    const p = project(r, camZ, 1.2)
+    if (!p) return null
+    return screen(p)
+}
+
+let lastTime = performance.now()
+function frame(now) {
+    const dt = (now - lastTime) / 1000
+    lastTime = now
+
+    angle += Math.PI * dt
+
     clear()
-    // for (const v of vs) {
-    //     point(screen(project(translate_z(rotate_xz(v, angle), dz))))
-    // }
+
     for (const f of fs) {
         for (let i = 0; i < f.length; ++i) {
             const a = vs[f[i]];
             const b = vs[f[(i+1)%f.length]];
-            line(screen(project(translate_z(rotate_xz(a, angle), dz))),
-                 screen(project(translate_z(rotate_xz(b, angle), dz))))
+            const sa = worldToScreen(a)
+            const sb = worldToScreen(b)
+            line(sa, sb)
         }
     }
-    setTimeout(frame, 1000/FPS);
+
+    requestAnimationFrame(frame)
 }
-setTimeout(frame, 1000/FPS);
+
+requestAnimationFrame(frame)
+// ...existing code...
