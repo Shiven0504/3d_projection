@@ -1,3 +1,4 @@
+// ...existing code...
 const BACKGROUND = "#101010"
 const FOREGROUND = "#50FF50"
 
@@ -36,9 +37,11 @@ function screen(p) {
 }
 
 function project({x, y, z}) {
+    // simple perspective with focal length
+    const FOCAL = 1.2;
     return {
-        x: x/z,
-        y: y/z,
+        x: (x * FOCAL) / z,
+        y: (y * FOCAL) / z,
     }
 }
 
@@ -59,7 +62,7 @@ function rotate_xz({x, y, z}, angle) {
     };
 }
 
-let dz = 1;
+let dz = 2; // move cube in front of camera
 let angle = 0;
 
 
@@ -84,22 +87,33 @@ const fs = [
     [3, 7],
 ]
 
-function frame() {
-    const dt = 1/FPS;
-    // dz += 1*dt;
-    angle += Math.PI*dt;
+// frame-rate independent animation using requestAnimationFrame
+let lastTime = performance.now();
+function frame(time) {
+    const dt = Math.max(1/120, (time - lastTime) / 1000); // clamp tiny dt
+    lastTime = time;
+
+    angle += Math.PI * dt;
     clear()
-    // for (const v of vs) {
-    //     point(screen(project(translate_z(rotate_xz(v, angle), dz))))
-    // }
+
+    // precompute transformed & projected vertices, skip ones behind camera
+    const transformed = vs.map(v => translate_z(rotate_xz(v, angle), dz));
+    const projected = transformed.map(v => {
+        if (v.z <= 0.01) return null; // behind camera or too close -> skip
+        return screen(project(v));
+    });
+
     for (const f of fs) {
         for (let i = 0; i < f.length; ++i) {
-            const a = vs[f[i]];
-            const b = vs[f[(i+1)%f.length]];
-            line(screen(project(translate_z(rotate_xz(a, angle), dz))),
-                 screen(project(translate_z(rotate_xz(b, angle), dz))))
+            const aIdx = f[i];
+            const bIdx = f[(i+1)%f.length];
+            const a = projected[aIdx];
+            const b = projected[bIdx];
+            if (!a || !b) continue; // skip edges with vertices behind camera
+            line(a, b)
         }
     }
-    setTimeout(frame, 1000/FPS);
+
+    requestAnimationFrame(frame);
 }
-setTimeout(frame, 1000/FPS);
+requestAnimationFrame(frame);
