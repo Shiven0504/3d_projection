@@ -1,14 +1,11 @@
-const BACKGROUND = "#101010";
-const FOREGROUND = "#50FF50";
+const BACKGROUND = "#101010"
+const FOREGROUND = "#50FF50"
 
-// grab canvas element by id; make sure it's present
-const game = document.getElementById('game');
-if (!game) throw new Error('Canvas element with id "game" not found');
-
-// set a fixed drawing size
-game.width = 600;
-game.height = 580;
-const ctx = game.getContext('2d');
+console.log(game)
+game.width = 600
+game.height = 580
+const ctx = game.getContext("2d")
+console.log(ctx)
 
 function clear() {
     ctx.fillStyle = BACKGROUND
@@ -39,12 +36,10 @@ function screen(p) {
 }
 
 function project({x, y, z}) {
-    // guard against z=0
-    const inv = z === 0 ? 1e6 : 1/z;
     return {
-        x: x * inv,
-        y: y * inv,
-    };
+        x: x/z,
+        y: y/z,
+    }
 }
 
 const FPS = 60;
@@ -89,30 +84,22 @@ const fs = [
     [3, 7],
 ]
 
-let lastTime = 0;
-
-function frame(time) {
-    // compute elapsed seconds; ignore first frame
-    const dt = lastTime ? (time - lastTime) / 1000 : 0;
-    lastTime = time;
-
-    // rotate at π radians per second
-    angle += Math.PI * dt;
-
-    clear();
-
+function frame() {
+    const dt = 1/FPS;
+    // dz += 1*dt;
+    angle += Math.PI*dt;
+    clear()
+    // for (const v of vs) {
+    //     point(screen(project(translate_z(rotate_xz(v, angle), dz))))
+    // }
     for (const f of fs) {
         for (let i = 0; i < f.length; ++i) {
             const a = vs[f[i]];
-            const b = vs[f[(i + 1) % f.length]];
-            const pa = screen(project(translate_z(rotate_xz(a, angle), dz)));
-            const pb = screen(project(translate_z(rotate_xz(b, angle), dz)));
-            line(pa, pb);
+            const b = vs[f[(i+1)%f.length]];
+            line(screen(project(translate_z(rotate_xz(a, angle), dz))),
+                 screen(project(translate_z(rotate_xz(b, angle), dz))))
         }
     }
-
-    requestAnimationFrame(frame);
+    setTimeout(frame, 1000/FPS);
 }
-
-// kick off the animation loop
-requestAnimationFrame(frame);
+setTimeout(frame, 1000/FPS);
