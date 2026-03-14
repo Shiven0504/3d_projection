@@ -1,11 +1,9 @@
 const BACKGROUND = "#101010"
 const FOREGROUND = "#50FF50"
 
-console.log(game)
 game.width = 600
 game.height = 580
 const ctx = game.getContext("2d")
-console.log(ctx)
 
 function clear() {
     ctx.fillStyle = BACKGROUND
@@ -42,9 +40,6 @@ function project({x, y, z}) {
     }
 }
 
-const FPS = 60;
-
-
 function translate_z({x, y, z}, dz) {
     return {x, y, z: z + dz};
 }
@@ -61,7 +56,6 @@ function rotate_xz({x, y, z}, angle) {
 
 let dz = 1;
 let angle = 0;
-
 
 const vs = [
     {x:  0.25, y:  0.25, z:  0.25},
@@ -84,14 +78,13 @@ const fs = [
     [3, 7],
 ]
 
-function frame() {
-    const dt = 1/FPS;
-    // dz += 1*dt;
+let lastTime = null;
+
+function frame(timestamp) {
+    const dt = lastTime === null ? 0 : Math.min((timestamp - lastTime) / 1000, 0.1);
+    lastTime = timestamp;
     angle += Math.PI*dt;
     clear()
-    // for (const v of vs) {
-    //     point(screen(project(translate_z(rotate_xz(v, angle), dz))))
-    // }
     for (const f of fs) {
         for (let i = 0; i < f.length; ++i) {
             const a = vs[f[i]];
@@ -100,6 +93,6 @@ function frame() {
                  screen(project(translate_z(rotate_xz(b, angle), dz))))
         }
     }
-    setTimeout(frame, 1000/FPS);
+    requestAnimationFrame(frame);
 }
-setTimeout(frame, 1000/FPS);
+requestAnimationFrame(frame);
