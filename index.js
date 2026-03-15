@@ -5,17 +5,20 @@ game.width = 600
 game.height = 580
 const ctx = game.getContext("2d")
 
+// Clears the canvas with the background color
 function clear() {
     ctx.fillStyle = BACKGROUND
     ctx.fillRect(0, 0, game.width, game.height)
 }
 
+// Draws a point (small square) at the given coordinates
 function point({x, y}) {
     const s = 20;
     ctx.fillStyle = FOREGROUND
     ctx.fillRect(x - s/2, y - s/2, s, s)
 }
 
+// Draws a line between two points
 function line(p1, p2) {
     ctx.lineWidth = 3;
     ctx.strokeStyle = FOREGROUND
@@ -25,6 +28,7 @@ function line(p1, p2) {
     ctx.stroke();
 }
 
+// Converts 3D coordinates (-1 to 1) to screen coordinates (0 to canvas size)
 function screen(p) {
     // -1..1 => 0..2 => 0..1 => 0..w
     return {
@@ -33,6 +37,7 @@ function screen(p) {
     }
 }
 
+// Projects 3D point to 2D using perspective projection
 function project({x, y, z}) {
     return {
         x: x/z,
@@ -40,10 +45,12 @@ function project({x, y, z}) {
     }
 }
 
+// Translates a point along the Z-axis
 function translate_z({x, y, z}, dz) {
     return {x, y, z: z + dz};
 }
 
+// Rotates a point around the X-axis in the XZ plane
 function rotate_xz({x, y, z}, angle) {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
@@ -71,6 +78,7 @@ document.addEventListener('keydown', (event) => {
 game.tabIndex = 0;
 game.focus();
 
+// Define vertices of the cube
 const vs = [
     {x:  0.25, y:  0.25, z:  0.25},
     {x: -0.25, y:  0.25, z:  0.25},
@@ -83,6 +91,7 @@ const vs = [
     {x:  0.25, y: -0.25, z: -0.25},
 ]
 
+// Define faces as arrays of vertex indices
 const fs = [
     [0, 1, 2, 3],
     [4, 5, 6, 7],
@@ -94,11 +103,15 @@ const fs = [
 
 let lastTime = null;
 
+// Main animation loop
 function frame(timestamp) {
     const dt = lastTime === null ? 0 : Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
     angle += rotationSpeed * dt;
+
     clear()
+    
+    // Draw each face by connecting vertices
     for (const f of fs) {
         for (let i = 0; i < f.length; ++i) {
             const a = vs[f[i]];
@@ -107,6 +120,12 @@ function frame(timestamp) {
                  screen(project(translate_z(rotate_xz(b, angle), dz))))
         }
     }
+    
+    // Display rotation speed as text
+    ctx.fillStyle = FOREGROUND;
+    ctx.font = "16px monospace";
+    ctx.fillText(`Rotation Speed: ${rotationSpeed.toFixed(2)}`, 10, 20);
+    
     requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
