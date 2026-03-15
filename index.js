@@ -56,6 +56,20 @@ function rotate_xz({x, y, z}, angle) {
 
 let dz = 1;
 let angle = 0;
+let rotationSpeed = Math.PI; // Initial rotation speed
+
+// Add event listeners for user controls
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowUp' || event.key === 'w') {
+        rotationSpeed += 0.1;
+    } else if (event.key === 'ArrowDown' || event.key === 's') {
+        rotationSpeed = Math.max(0, rotationSpeed - 0.1);
+    }
+});
+
+// Make canvas focusable for keyboard events
+game.tabIndex = 0;
+game.focus();
 
 const vs = [
     {x:  0.25, y:  0.25, z:  0.25},
@@ -83,7 +97,7 @@ let lastTime = null;
 function frame(timestamp) {
     const dt = lastTime === null ? 0 : Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
-    angle += Math.PI*dt;
+    angle += rotationSpeed * dt;
     clear()
     for (const f of fs) {
         for (let i = 0; i < f.length; ++i) {
