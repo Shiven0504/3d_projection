@@ -1,7 +1,6 @@
 const BACKGROUND = "#101010"
 const COLORS = ["#50FF50", "#FF5050", "#5050FF", "#FFD700", "#FF50FF", "#50FFFF"]
 
-const game = document.getElementById('game')
 game.width = 600
 game.height = 580
 const ctx = game.getContext("2d")
@@ -53,21 +52,15 @@ let paused = false
 
 document.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowUp' || event.key === 'w') {
-        rotationSpeed += 0.1 * Math.sign(rotationSpeed) || 0.1
+        rotationSpeed += 0.1
     } else if (event.key === 'ArrowDown' || event.key === 's') {
-        if (Math.abs(rotationSpeed) > 0.1) {
-            rotationSpeed -= 0.1 * Math.sign(rotationSpeed)
-        } else {
-            rotationSpeed = 0
-        }
+        rotationSpeed = Math.max(0, rotationSpeed - 0.1)
     } else if (event.key === ' ') {
         paused = !paused
     } else if (event.key === 'r') {
         rotationSpeed = Math.PI
         angleXZ = 0
         angleXY = 0
-    } else if (event.key === 'd') {
-        rotationSpeed = -rotationSpeed
     }
 })
 
@@ -97,8 +90,8 @@ const fs = [
 function drawHUD() {
     ctx.fillStyle = "#ffffff"
     ctx.font = "14px monospace"
-    ctx.fillText(`Speed: ${Math.abs(rotationSpeed).toFixed(2)} rad/s ${rotationSpeed < 0 ? '(reverse)' : ''}`, 10, 20)
-    ctx.fillText(`W/↑ = faster  S/↓ = slower  D = reverse  Space = pause  R = reset`, 10, 40)
+    ctx.fillText(`Speed: ${rotationSpeed.toFixed(2)} rad/s`, 10, 20)
+    ctx.fillText(`W/↑ = faster  S/↓ = slower  Space = pause  R = reset`, 10, 40)
     if (paused) {
         ctx.fillStyle = "#FFD700"
         ctx.font = "bold 20px monospace"
