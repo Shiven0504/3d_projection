@@ -1,6 +1,7 @@
 const BACKGROUND = "#101010"
 const COLORS = ["#50FF50", "#FF5050", "#5050FF", "#FFD700", "#FF50FF", "#50FFFF"]
 
+const game = document.getElementById('game')
 game.width = 600
 game.height = 580
 const ctx = game.getContext("2d")
