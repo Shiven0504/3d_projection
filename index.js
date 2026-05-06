@@ -1,5 +1,5 @@
 const BACKGROUND = "#101010"
-const FOREGROUND = "#50FF50"
+const COLORS = ["#50FF50", "#FF5050", "#5050FF", "#FFD700", "#FF50FF", "#50FFFF"]
 
 game.width = 600
 game.height = 580
@@ -10,15 +10,9 @@ function clear() {
     ctx.fillRect(0, 0, game.width, game.height)
 }
 
-function point({x, y}) {
-    const s = 20;
-    ctx.fillStyle = FOREGROUND
-    ctx.fillRect(x - s/2, y - s/2, s, s)
-}
-
-function line(p1, p2) {
+function line(p1, p2, color) {
     ctx.lineWidth = 3;
-    ctx.strokeStyle = FOREGROUND
+    ctx.strokeStyle = color
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(p2.x, p2.y);
@@ -26,61 +20,62 @@ function line(p1, p2) {
 }
 
 function screen(p) {
-    // -1..1 => 0..2 => 0..1 => 0..w
     return {
-        x: (p.x + 1)/2*game.width,
-        y: (1 - (p.y + 1)/2)*game.height,
+        x: (p.x + 1) / 2 * game.width,
+        y: (1 - (p.y + 1) / 2) * game.height,
     }
 }
 
-function project({x, y, z}) {
-    return {
-        x: x/z,
-        y: y/z,
-    }
+function project({ x, y, z }) {
+    return { x: x / z, y: y / z }
 }
 
-function translate_z({x, y, z}, dz) {
-    return {x, y, z: z + dz};
+function translate_z({ x, y, z }, dz) {
+    return { x, y, z: z + dz }
 }
 
-function rotate_xz({x, y, z}, angle) {
-    const c = Math.cos(angle);
-    const s = Math.sin(angle);
-    return {
-        x: x*c-z*s,
-        y,
-        z: x*s+z*c,
-    };
+function rotate_xz({ x, y, z }, angle) {
+    const c = Math.cos(angle), s = Math.sin(angle)
+    return { x: x * c - z * s, y, z: x * s + z * c }
 }
 
-let dz = 1;
-let angle = 0;
-let rotationSpeed = Math.PI; // Initial rotation speed
+function rotate_xy({ x, y, z }, angle) {
+    const c = Math.cos(angle), s = Math.sin(angle)
+    return { x: x * c - y * s, y: x * s + y * c, z }
+}
 
-// Add event listeners for user controls
+let dz = 1
+let angleXZ = 0
+let angleXY = 0
+let rotationSpeed = Math.PI
+let paused = false
+
 document.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowUp' || event.key === 'w') {
-        rotationSpeed += 0.1;
+        rotationSpeed += 0.1
     } else if (event.key === 'ArrowDown' || event.key === 's') {
-        rotationSpeed = Math.max(0, rotationSpeed - 0.1);
+        rotationSpeed = Math.max(0, rotationSpeed - 0.1)
+    } else if (event.key === ' ') {
+        paused = !paused
+    } else if (event.key === 'r') {
+        rotationSpeed = Math.PI
+        angleXZ = 0
+        angleXY = 0
     }
-});
+})
 
-// Make canvas focusable for keyboard events
-game.tabIndex = 0;
-game.focus();
+game.tabIndex = 0
+game.focus()
 
 const vs = [
-    {x:  0.25, y:  0.25, z:  0.25},
-    {x: -0.25, y:  0.25, z:  0.25},
-    {x: -0.25, y: -0.25, z:  0.25},
-    {x:  0.25, y: -0.25, z:  0.25},
-
-    {x:  0.25, y:  0.25, z: -0.25},
-    {x: -0.25, y:  0.25, z: -0.25},
-    {x: -0.25, y: -0.25, z: -0.25},
-    {x:  0.25, y: -0.25, z: -0.25},
+    { x:  0.25, y:  0.25, z:  0.25 },
+    { x: -0.25, y:  0.25, z:  0.25 },
+    { x: -0.25, y: -0.25, z:  0.25 },
+    { x:  0.25, y: -0.25, z:  0.25 },
+    { x:  0.25, y:  0.25, z: -0.25 },
+    { x: -0.25, y:  0.25, z: -0.25 },
+    { x: -0.25, y: -0.25, z: -0.25 },
+    { x:  0.25, y: -0.25, z: -0.25 },
 ]
 
 const fs = [
@@ -92,21 +87,44 @@ const fs = [
     [3, 7],
 ]
 
-let lastTime = null;
+function drawHUD() {
+    ctx.fillStyle = "#ffffff"
+    ctx.font = "14px monospace"
+    ctx.fillText(`Speed: ${rotationSpeed.toFixed(2)} rad/s`, 10, 20)
+    ctx.fillText(`W/↑ = faster  S/↓ = slower  Space = pause  R = reset`, 10, 40)
+    if (paused) {
+        ctx.fillStyle = "#FFD700"
+        ctx.font = "bold 20px monospace"
+        ctx.fillText("PAUSED", game.width / 2 - 40, game.height / 2)
+    }
+}
+
+let lastTime = null
 
 function frame(timestamp) {
-    const dt = lastTime === null ? 0 : Math.min((timestamp - lastTime) / 1000, 0.1);
-    lastTime = timestamp;
-    angle += rotationSpeed * dt;
+    const dt = lastTime === null ? 0 : Math.min((timestamp - lastTime) / 1000, 0.1)
+    lastTime = timestamp
+
+    if (!paused) {
+        angleXZ += rotationSpeed * dt
+        angleXY += rotationSpeed * 0.4 * dt
+    }
+
     clear()
-    for (const f of fs) {
+
+    for (let fi = 0; fi < fs.length; fi++) {
+        const f = fs[fi]
+        const color = COLORS[fi % COLORS.length]
         for (let i = 0; i < f.length; ++i) {
-            const a = vs[f[i]];
-            const b = vs[f[(i+1)%f.length]];
-            line(screen(project(translate_z(rotate_xz(a, angle), dz))),
-                 screen(project(translate_z(rotate_xz(b, angle), dz))))
+            const a = vs[f[i]]
+            const b = vs[f[(i + 1) % f.length]]
+            const transform = v => screen(project(translate_z(rotate_xz(rotate_xy(v, angleXY), angleXZ), dz)))
+            line(transform(a), transform(b), color)
         }
     }
-    requestAnimationFrame(frame);
+
+    drawHUD()
+    requestAnimationFrame(frame)
 }
-requestAnimationFrame(frame);
+
+requestAnimationFrame(frame)
