@@ -52,15 +52,21 @@ let paused = false
 
 document.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowUp' || event.key === 'w') {
-        rotationSpeed += 0.1
+        rotationSpeed += 0.1 * Math.sign(rotationSpeed) || 0.1
     } else if (event.key === 'ArrowDown' || event.key === 's') {
-        rotationSpeed = Math.max(0, rotationSpeed - 0.1)
+        if (Math.abs(rotationSpeed) > 0.1) {
+            rotationSpeed -= 0.1 * Math.sign(rotationSpeed)
+        } else {
+            rotationSpeed = 0
+        }
     } else if (event.key === ' ') {
         paused = !paused
     } else if (event.key === 'r') {
         rotationSpeed = Math.PI
         angleXZ = 0
         angleXY = 0
+    } else if (event.key === 'd') {
+        rotationSpeed = -rotationSpeed
     }
 })
 
@@ -90,8 +96,8 @@ const fs = [
 function drawHUD() {
     ctx.fillStyle = "#ffffff"
     ctx.font = "14px monospace"
-    ctx.fillText(`Speed: ${rotationSpeed.toFixed(2)} rad/s`, 10, 20)
-    ctx.fillText(`W/↑ = faster  S/↓ = slower  Space = pause  R = reset`, 10, 40)
+    ctx.fillText(`Speed: ${Math.abs(rotationSpeed).toFixed(2)} rad/s ${rotationSpeed < 0 ? '(reverse)' : ''}`, 10, 20)
+    ctx.fillText(`W/↑ = faster  S/↓ = slower  D = reverse  Space = pause  R = reset`, 10, 40)
     if (paused) {
         ctx.fillStyle = "#FFD700"
         ctx.font = "bold 20px monospace"
