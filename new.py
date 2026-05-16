@@ -1,17 +1,21 @@
 from ursina import *
 from ursina.prefabs.first_person_controller import FirstPersonController
 
+# Initialize application
 app = Ursina()
 
+# Window configuration
 window.title = 'Voxel Builder'
 window.borderless = False
 
+# Player setup
 player = FirstPersonController()
 player.cursor.color = color.clear
 
+# Environment
 Sky()
 
-# Block types: (texture, color)
+# Block definitions: (texture, color)
 block_types = [
     ('grass.png', color.white),
     ('brick.png', color.white),
@@ -19,11 +23,14 @@ block_types = [
     ('white_cube', color.brown),
     ('white_cube', color.green),
 ]
-selected_block = 0
 
+# Game state
+selected_block = 0
 boxes = []
+TERRAIN_SIZE = 20
 
 def make_block(pos, block_index=0):
+    """Create a voxel block at the specified position."""
     tex, col = block_types[block_index]
     b = Button(
         color=col,
@@ -37,8 +44,8 @@ def make_block(pos, block_index=0):
     return b
 
 # Generate flat terrain
-for i in range(20):
-    for j in range(20):
+for i in range(TERRAIN_SIZE):
+    for j in range(TERRAIN_SIZE):
         boxes.append(make_block((j, 0, i), 0))
 
 # Crosshair
@@ -51,6 +58,7 @@ def update():
     hud.text = f'Block: {selected_block + 1}/{len(block_types)}  [1-{len(block_types)} to switch]'
 
 def input(key):
+    """Handle user input for block selection and placement/removal."""
     global selected_block
 
     # Number keys to select block type
