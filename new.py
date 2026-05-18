@@ -15,13 +15,13 @@ player.cursor.color = color.clear
 # Environment
 Sky()
 
-# Block definitions: (texture, color)
+# Block definitions: (texture, color, label)
 block_types = [
-    ('grass.png', color.white),
-    ('brick.png', color.white),
-    ('white_cube', color.gray),
-    ('white_cube', color.brown),
-    ('white_cube', color.green),
+    ('grass.png', color.white, 'Grass'),
+    ('brick.png', color.white, 'Brick'),
+    ('white_cube', color.gray, 'Stone'),
+    ('white_cube', color.brown, 'Wood'),
+    ('white_cube', color.green, 'Leaves'),
 ]
 
 # Game state
@@ -31,7 +31,7 @@ TERRAIN_SIZE = 20
 
 def make_block(pos, block_index=0):
     """Create a voxel block at the specified position."""
-    tex, col = block_types[block_index]
+    tex, col, _label = block_types[block_index]
     b = Button(
         color=col,
         model='cube',
@@ -55,11 +55,18 @@ crosshair = Text('+', origin=(0, 0), scale=2, color=color.white)
 hud = Text('', origin=(-0.85, -0.45), scale=1.2, color=color.white)
 
 def update():
-    hud.text = f'Block: {selected_block + 1}/{len(block_types)}  [1-{len(block_types)} to switch]'
+    texture_name = block_types[selected_block][2]
+    hud.text = (
+        f'Block: {selected_block + 1}/{len(block_types)} ({texture_name})\n'
+        f'[1-{len(block_types)} to switch, scroll to cycle, Esc to quit]'
+    )
 
 def input(key):
     """Handle user input for block selection and placement/removal."""
     global selected_block
+
+    if key == 'escape':
+        application.quit()
 
     # Number keys to select block type
     for n in range(len(block_types)):
