@@ -79,6 +79,12 @@ def input(key):
     if key == 'scroll down':
         selected_block = (selected_block - 1) % len(block_types)
 
+    # Additional keys for block selection
+    if key == 'q':
+        selected_block = (selected_block - 1) % len(block_types)
+    if key == 'e':
+        selected_block = (selected_block + 1) % len(block_types)
+
     for box in boxes:
         if box.hovered:
             if key == 'left mouse down':
