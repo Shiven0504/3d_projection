@@ -58,7 +58,7 @@ def update():
     texture_name = block_types[selected_block][2]
     hud.text = (
         f'Block: {selected_block + 1}/{len(block_types)} ({texture_name})\n'
-        f'[1-{len(block_types)} to switch, scroll to cycle, Esc to quit]'
+        f'[1-{len(block_types)} to switch, scroll to cycle, Esc to quit, C to clear]'
     )
 
 def input(key):
@@ -84,6 +84,14 @@ def input(key):
         selected_block = (selected_block - 1) % len(block_types)
     if key == 'e':
         selected_block = (selected_block + 1) % len(block_types)
+
+    # Clear non-ground blocks
+    if key == 'c':
+        to_remove = [b for b in boxes if b.position.y != 0]
+        for b in to_remove:
+            if b in boxes:
+                boxes.remove(b)
+            destroy(b)
 
     for box in boxes:
         if box.hovered:
