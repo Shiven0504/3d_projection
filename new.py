@@ -1,3 +1,6 @@
+import argparse
+import subprocess
+
 from ursina import *
 from ursina.prefabs.first_person_controller import FirstPersonController
 
@@ -102,4 +105,25 @@ def input(key):
                 boxes.remove(box)
                 destroy(box)
 
-app.run()
+
+def create_git_branch(branch_name: str) -> None:
+    """Create and switch to a new git branch before launching the app."""
+    subprocess.run(['git', 'checkout', '-b', branch_name], check=True)
+    print(f'Created and switched to new branch: {branch_name}')
+    print(f'Remember to push it to GitHub: git push -u origin {branch_name}')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Run the voxel builder and optionally create a new git branch first.'
+    )
+    parser.add_argument(
+        '--new-branch', '-b',
+        help='Create and checkout a new git branch before launching the app.'
+    )
+    args = parser.parse_args()
+
+    if args.new_branch:
+        create_git_branch(args.new_branch)
+
+    app.run()
